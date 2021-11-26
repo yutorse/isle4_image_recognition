@@ -5,9 +5,9 @@ import random
 train_images, train_labels, test_images, test_labels = None, None, None, None
 
 d = 784
-class_num = 10
-inner_node_num = 5
-batch_num = 100
+class_size = 10
+inner_node_size = 5
+batch_size = 100
 
 def image_load():
   global train_images, train_labels, test_images, test_labels
@@ -24,11 +24,19 @@ def softmax_function(a): #numpy配列で受けとる #動作確認OK.
   sum = np.sum(np.exp(a - max_a))
   return np.exp(a - max_a) / sum
 
-def calc_cross_entropy_error(y, label):
-  label_vector = np.reshape(np.zeros(class_num), (class_num, 1))
+def calc_cross_entropy_error(y, label): #cross-entropy-error
+  label_vector = np.zeros(class_size)
   label_vector[label] = 1
-  return -(np.dot(np.log(y), label_vector))
-  
+  return -(np.dot(label_vector, np.log(y)))
+
+def choice_batch():
+  batchs, labels = [], []
+  indexs = np.random.choice(60000, size=batch_size, replace=False)
+  for index in indexs:
+    batchs.append(train_images[index])
+    labels.append(train_labels[index])
+  return batchs, labels
+
 def input_layer(image):
   image = np.array(image)
   trans_image = np.reshape(image, (d, 1))
@@ -36,25 +44,26 @@ def input_layer(image):
 
 def inner_layer(vecx):
   np.random.seed(10)
-  W_1 = np.random.normal(loc=0, scale=np.sqrt(1/d), size=(inner_node_num, d))
-  vecb_1 = np.random.normal(loc=0, scale=np.sqrt(1/d), size=(inner_node_num, 1))
+  W_1 = np.random.normal(loc=0, scale=np.sqrt(1/d), size=(inner_node_size, d))
+  vecb_1 = np.random.normal(loc=0, scale=np.sqrt(1/d), size=(inner_node_size, 1))
   return sigmoid_function(np.dot(W_1, vecx) + vecb_1)
 
 def output_layer(vecy):
   np.random.seed(20)
-  W_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_num), size=(class_num, inner_node_num))
-  vecb_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_num), size=(class_num, 1))
+  W_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(class_size, inner_node_size))
+  vecb_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(class_size, 1))
   return softmax_function(np.dot(W_2, vecy) + vecb_2)
 
 def main():
   image_load()
-  i = int(input())
-  #selected_batchs = random.sample(train_images, batch_num)
-  image = test_images[i]
-  result = output_layer(inner_layer(input_layer(image)))
-  ans = np.argmax(result)
-  print(ans)
-  calc_cross_entropy_error([0.1, 0.2, 0.5, 0.1, 0, 0, 0.1, 0, 0, 0], 3)
+  batchs, labels = choice_batch()
+  batchs_result = np.array(list(map(output_layer, map(inner_layer, map(input_layer, batchs)))))
+  cross_entropy_error_list = []
+  for i in range(100):
+    cross_entropy_error_list.append(list(calc_cross_entropy_error(batchs_result[i], labels[i])))
+  cross_entropy_error_mean = np.mean(cross_entropy_error_list)
+
+  print(f"クロスエントロピー誤差の平均は{cross_entropy_error_mean}です。")
 
 if __name__ ==  '__main__':
   main()
