@@ -1,35 +1,34 @@
 import numpy as np
 import mnist
 
-d = 784
-class_num = 10
-inner_node_num = 5
+input_node_size = 784
+inner_node_size = 5
+output_node_size = 10
 
-def sigmoid_function(t): #動作確認OK.
+def sigmoid_function(t): #シグモイド関数
   return 1/(1 + np.exp(-t))
 
-def softmax_function(a): #numpy配列で受けとる #動作確認OK.
+def softmax_function(a): #ソフトマックス関数
   max_a = a.max()
   sum = np.sum(np.exp(a - max_a))
   return np.exp(a - max_a) / sum
 
-def input_layer(image):
+def input_layer(image): #入力層
   image = np.array(image)
-  trans_image = np.reshape(image, (d, 1))
+  trans_image = np.reshape(image, (input_node_size, 1))
   return trans_image
 
-def inner_layer(vecx):
-  print(vecx)
+def inner_layer(x): #中間層
   np.random.seed(10)
-  W_1 = np.random.normal(loc=0, scale=np.sqrt(1/d), size=(inner_node_num, d))
-  vecb_1 = np.random.normal(loc=0, scale=np.sqrt(1/d), size=(inner_node_num, 1))
-  return sigmoid_function(np.dot(W_1, vecx) + vecb_1)
+  W_1 = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, input_node_size))
+  b_1 = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, 1))
+  return sigmoid_function(np.dot(W_1, x) + b_1)
 
-def output_layer(vecy):
+def output_layer(y): #出力層
   np.random.seed(20)
-  W_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_num), size=(class_num, inner_node_num))
-  vecb_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_num), size=(class_num, 1))
-  return softmax_function(np.dot(W_2, vecy) + vecb_2)
+  W_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, inner_node_size))
+  b_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
+  return softmax_function(np.dot(W_2, y) + b_2)
 
 def main():
   test_images = mnist.download_and_parse_mnist_file("t10k-images-idx3-ubyte.gz")
