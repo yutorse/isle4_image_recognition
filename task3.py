@@ -1,5 +1,6 @@
 import numpy as np
 import mnist
+import matplotlib.pyplot as plt
 import random
 
 train_images, train_labels, test_images, test_labels = None, None, None, None
@@ -84,10 +85,12 @@ def main():
   parameters["b_1"] = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, 1))
   parameters["W_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, inner_node_size))
   parameters["b_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
+  
+  training_loss_list = []
 
   # 学習
   for i in range(epoch):
-    print(f"epoch{i}.")
+    print(f"epoch: {i+1}/{epoch}")
     for j in range(len(train_images)//batch_size):
       batchs, labels = get_batch()
       x = np.array(list(map(input_layer, batchs)))
@@ -111,8 +114,16 @@ def main():
       parameters["b_2"] -= (learning_rate*derivative_b_2)/(i+1)
 
       cross_entropy_error = loss_function(processed_batchs, labels)
-      print(f"The mean of losses is {cross_entropy_error}.")
-
+      training_loss_list.append(cross_entropy_error)
+      
+      #print(f"The mean of losses is {cross_entropy_error}.")
+  plt.figure(figsize=(8, 6)) # 図の設定
+  plt.plot(np.arange(1, len(training_loss_list) + 1), training_loss_list) # 折れ線グラフ
+  plt.xlabel('iteration') # x軸ラベル
+  plt.ylabel('loss') # y軸ラベル
+  plt.title('Cross Entropy Error', fontsize=20) # タイトル
+  plt.grid() # グリッド線
+  plt.show()
   #batchs, labels = get_batch()
   #processed_batchs = np.array(list(map(output_layer, map(inner_layer, map(input_layer, batchs)))))
   #cross_entropy_error = loss_function(processed_batchs, labels)
