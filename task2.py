@@ -13,7 +13,7 @@ inner_layer_seed = 10
 output_layer_seed = 20
 
 # 画像データの読み込み
-def image_load():
+def load_image():
   global train_images, train_labels, test_images, test_labels
   test_images = mnist.download_and_parse_mnist_file("t10k-images-idx3-ubyte.gz")
   test_labels = mnist.download_and_parse_mnist_file("t10k-labels-idx1-ubyte.gz") #確認済み
@@ -69,7 +69,7 @@ def output_layer(y):
   return softmax_function(np.dot(W_2, y) + b_2)
 
 def main():
-  image_load()
+  load_image()
   batchs, labels = get_batch()
   processed_batchs = np.array(list(map(output_layer, map(inner_layer, map(input_layer, batchs)))))
   cross_entropy_error = loss_function(processed_batchs, labels)

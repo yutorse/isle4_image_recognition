@@ -15,31 +15,44 @@ parameters = {}
 
 learning_rate = 0.1
 
-def image_load():
+def load_image():
   global train_images, train_labels, test_images, test_labels
   test_images = mnist.download_and_parse_mnist_file("t10k-images-idx3-ubyte.gz")
   test_labels = mnist.download_and_parse_mnist_file("t10k-labels-idx1-ubyte.gz") #確認済み
   train_images = mnist.download_and_parse_mnist_file("train-images-idx3-ubyte.gz")
   train_labels = mnist.download_and_parse_mnist_file("train-labels-idx1-ubyte.gz")
 
+def load_parameters(file_name):
+  load_param = np.load(file_name)
+  parameters["W_1"] = load_param["W_1"]
+  parameters["W_2"] = load_param["W_2"]
+  parameters["b_1"] = load_param["b_1"]
+  parameters["b_2"] = load_param["b_2"]
+
 def plot_figure(list):
-  plt.figure(figsize=(8, 6)) # 図の設定
-  plt.plot(np.arange(1, len(list) + 1), list) # 折れ線グラフ
-  plt.xlabel('iteration') # x軸ラベル
-  plt.ylabel('loss') # y軸ラベル
+  plt.figure(figsize=(8, 6))
+  plt.plot(np.arange(1, len(list) + 1), list)
+  plt.xlabel('iteration')
+  plt.ylabel('loss')
   plt.title('Cross Entropy Error', fontsize=20) # タイトル
-  plt.grid() # グリッド線
+  plt.grid()
   plt.show()
 
-def sigmoid_function(t):
+def init_parameters():
+  parameters["W_1"] = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, input_node_size))
+  parameters["b_1"] = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, 1))
+  parameters["W_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, inner_node_size))
+  parameters["b_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
+
+def sigmoid_function(t): # シグモイド関数
   return 1/(1 + np.exp(-t))
 
-def softmax_function(a):
+def softmax_function(a): # ソフトマックス関数
   max_a = a.max()
   sum = np.sum(np.exp(a - max_a))
   return np.exp(a - max_a) / sum
 
-def loss_function(processed_images, labels):
+def loss_function(processed_images, labels): # 損失関数
   cross_entropy_error_list = []
   for i in range(batch_size):
     processed_image, label = processed_images[i], labels[i]
@@ -66,7 +79,7 @@ def calc_derivative_t(y, derivative_y):
     derivative_t_list.append(list(derivative_y.T[i] * y[i] * (1-y[i])))
   return derivative_t_list
 
-def get_batch():
+def get_batch(): # バッチの抽出
   indexs = np.random.choice(len(train_images), size=batch_size, replace=False)
   batchs, labels = train_images[indexs], train_labels[indexs]
   return batchs, labels
@@ -84,14 +97,12 @@ def output_layer(y): #出力層
 
 def main():
   # 画像データの準備
-  image_load()
+  load_image()
 
   # W_1, W_2, b_1, b_2 を乱数で初期化
-  parameters["W_1"] = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, input_node_size))
-  parameters["b_1"] = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, 1))
-  parameters["W_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, inner_node_size))
-  parameters["b_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
-  
+  init_parameters()
+
+  # 各バッチに対する損失を保持しておく配列
   training_loss_list = []
 
   # 学習
@@ -104,7 +115,7 @@ def main():
       processed_batchs = np.array(list(map(output_layer, y)))
       x = x.reshape(batch_size, input_node_size)
       y = y.reshape(batch_size, inner_node_size)
-      
+
       derivative_a = np.array(calc_derivative_a(processed_batchs, labels))
       derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)
       derivative_W_2 = np.dot(derivative_a.T, y)
@@ -121,24 +132,13 @@ def main():
 
       cross_entropy_error = loss_function(processed_batchs, labels)
       training_loss_list.append(cross_entropy_error)
-      
-      #print(f"The mean of losses is {cross_entropy_error}.")
-  plot_figure(training_loss_list)   
 
-  correct_num = 0
-  for i in range(len(test_images)):
-    test_image = test_images[i]
-    result = output_layer(inner_layer(input_layer(test_image)))
-    ans = np.argmax(result)
-    if(ans == test_labels[i]):
-      correct_num += 1
-      
+    cross_entropy_error_mean = np.mean(training_loss_list[i*(len(train_images)//batch_size):len(training_loss_list)-1])
+    print(f"The mean of losses is {cross_entropy_error_mean}.")
+
+  plot_figure(training_loss_list)
+
   np.savez('parameters.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
-  print(correct_num/len(test_images))
-  #batchs, labels = get_batch()
-  #processed_batchs = np.array(list(map(output_layer, map(inner_layer, map(input_layer, batchs)))))
-  #cross_entropy_error = loss_function(processed_batchs, labels)
-  #print(f"The mean of losses is {cross_entropy_error}.")
 
 if __name__ ==  '__main__':
   main()
