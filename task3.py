@@ -9,10 +9,7 @@ input_node_size = 784
 inner_node_size = 100
 output_node_size = 10
 batch_size = 100
-epoch = 50
-
-inner_layer_seed = 10
-output_layer_seed = 20
+epoch = 10
 
 parameters = {}
 
