@@ -2,6 +2,8 @@ import numpy as np
 import mnist
 import matplotlib.pyplot as plt
 import random
+import time
+from tqdm import tqdm
 
 train_images, train_labels, test_images, test_labels = None, None, None, None
 
@@ -106,35 +108,38 @@ def main():
   training_loss_list = []
 
   # 学習
-  for i in range(epoch):
-    print(f"epoch: {i+1}/{epoch}")
-    for j in range(len(train_images)//batch_size):
-      batchs, labels = get_batch()
-      x = np.array(list(map(input_layer, batchs)))
-      y = np.array(list(map(inner_layer, x)))
-      processed_batchs = np.array(list(map(output_layer, y)))
-      x = x.reshape(batch_size, input_node_size)
-      y = y.reshape(batch_size, inner_node_size)
+  for i in tqdm(range(1, epoch+1)):
+    #print(f"epoch: {i+1}/{epoch}")
+    with tqdm(total=(len(train_images)//batch_size), leave=False) as pbar:
+      for j in range(len(train_images)//batch_size):
+        pbar.set_description('Epoch {}'.format(i))
+        batchs, labels = get_batch()
+        x = np.array(list(map(input_layer, batchs)))
+        y = np.array(list(map(inner_layer, x)))
+        processed_batchs = np.array(list(map(output_layer, y)))
+        x = x.reshape(batch_size, input_node_size)
+        y = y.reshape(batch_size, inner_node_size)
 
-      derivative_a = np.array(calc_derivative_a(processed_batchs, labels))
-      derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)
-      derivative_W_2 = np.dot(derivative_a.T, y)
-      derivative_b_2 = ((np.sum(derivative_a.T, axis=1)).reshape(output_node_size, 1))
-      derivative_t = np.array(calc_derivative_t(y, derivative_X_2))
-      derivative_X_1 = np.dot(parameters["W_1"].T, derivative_t.T)
-      derivative_W_1 = np.dot(derivative_t.T, x)
-      derivative_b_1 = ((np.sum(derivative_t.T, axis=1)).reshape(inner_node_size, 1))
+        derivative_a = np.array(calc_derivative_a(processed_batchs, labels))
+        derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)
+        derivative_W_2 = np.dot(derivative_a.T, y)
+        derivative_b_2 = ((np.sum(derivative_a.T, axis=1)).reshape(output_node_size, 1))
+        derivative_t = np.array(calc_derivative_t(y, derivative_X_2))
+        derivative_X_1 = np.dot(parameters["W_1"].T, derivative_t.T)
+        derivative_W_1 = np.dot(derivative_t.T, x)
+        derivative_b_1 = ((np.sum(derivative_t.T, axis=1)).reshape(inner_node_size, 1))
 
-      parameters["W_1"] -= (learning_rate*derivative_W_1)/(i+1)/(i+1)
-      parameters["W_2"] -= (learning_rate*derivative_W_2)/(i+1)/(i+1)
-      parameters["b_1"] -= (learning_rate*derivative_b_1)/(i+1)/(i+1)
-      parameters["b_2"] -= (learning_rate*derivative_b_2)/(i+1)/(i+1)
+        parameters["W_1"] -= (learning_rate*derivative_W_1)/(i**2)
+        parameters["W_2"] -= (learning_rate*derivative_W_2)/(i**2)
+        parameters["b_1"] -= (learning_rate*derivative_b_1)/(i**2)
+        parameters["b_2"] -= (learning_rate*derivative_b_2)/(i**2)
 
-      cross_entropy_error = loss_function(processed_batchs, labels)
-      training_loss_list.append(cross_entropy_error)
+        cross_entropy_error = loss_function(processed_batchs, labels)
+        training_loss_list.append(cross_entropy_error)
+        pbar.update(1)
 
-    cross_entropy_error_mean = np.mean(training_loss_list[i*(len(train_images)//batch_size):len(training_loss_list)-1])
-    print(f"The mean of losses is {cross_entropy_error_mean}.")
+    cross_entropy_error_mean = np.mean(training_loss_list[(i-1)*(len(train_images)//batch_size):len(training_loss_list)-1])
+    tqdm.write(f"The loss in epoch{i} is {cross_entropy_error_mean}.")
 
   plot_figure(training_loss_list)
 
