@@ -65,21 +65,21 @@ def loss_function(processed_images, labels): # 損失関数
   cross_entropy_error_mean = np.mean(cross_entropy_error_list)
   return cross_entropy_error_mean
 
-def calc_derivative_a(processed_images, labels):
-  derivative_a_list = []
+def calc_derivative_softmax(processed_images, labels):
+  derivative_softmax_list = []
   for i in range(batch_size):
     processed_image, label = processed_images[i].reshape(-1), labels[i]
     label_vector = np.zeros(output_node_size)
     label_vector[label] = 1
-    derivative_a_list.append(list((processed_image - label_vector)/batch_size))
-  return derivative_a_list
+    derivative_softmax_list.append(list((processed_image - label_vector)/batch_size))
+  return derivative_softmax_list
 
-def calc_derivative_t(y, derivative_y):
-  derivative_t_list = []
+def calc_derivative_sigmoid(y, derivative_y):
+  derivative_sigmoid_list = []
   for i in range(batch_size):
     derivative_y_i = (derivative_y.T[i]).reshape(inner_node_size, 1)
-    derivative_t_list.append(list(derivative_y.T[i] * y[i] * (1-y[i])))
-  return derivative_t_list
+    derivative_sigmoid_list.append(list(derivative_y.T[i] * y[i] * (1-y[i])))
+  return derivative_sigmoid_list
 
 def get_batch(): # バッチの抽出
   indexs = np.random.choice(len(train_images), size=batch_size, replace=False)
@@ -120,11 +120,11 @@ def main():
         x = x.reshape(batch_size, input_node_size)
         y = y.reshape(batch_size, inner_node_size)
 
-        derivative_a = np.array(calc_derivative_a(processed_batchs, labels))
+        derivative_a = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)
         derivative_W_2 = np.dot(derivative_a.T, y)
         derivative_b_2 = ((np.sum(derivative_a.T, axis=1)).reshape(output_node_size, 1))
-        derivative_t = np.array(calc_derivative_t(y, derivative_X_2))
+        derivative_t = np.array(calc_derivative_sigmoid(y, derivative_X_2))
         derivative_X_1 = np.dot(parameters["W_1"].T, derivative_t.T)
         derivative_W_1 = np.dot(derivative_t.T, x)
         derivative_b_1 = ((np.sum(derivative_t.T, axis=1)).reshape(inner_node_size, 1))
