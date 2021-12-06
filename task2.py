@@ -9,9 +9,6 @@ inner_node_size = 5
 output_node_size = 10
 batch_size = 100
 
-inner_layer_seed = 10
-output_layer_seed = 20
-
 # 画像データの読み込み
 def load_image():
   global train_images, train_labels, test_images, test_labels
@@ -39,7 +36,7 @@ def loss_function(processed_images, labels): #cross_entropy_error
     label_vector[label] = 1
     cross_entropy_error = -(np.dot(label_vector, np.log(processed_image)))
     cross_entropy_error_list.append(list(cross_entropy_error))
-    cross_entropy_error_mean = np.mean(cross_entropy_error_list)
+  cross_entropy_error_mean = np.mean(cross_entropy_error_list)
   return cross_entropy_error_mean
 
 # バッチの抽出

@@ -62,7 +62,7 @@ def loss_function(processed_images, labels): # 損失関数
     label_vector[label] = 1
     cross_entropy_error = -(np.dot(label_vector, np.log(processed_image)))
     cross_entropy_error_list.append(list(cross_entropy_error))
-    cross_entropy_error_mean = np.mean(cross_entropy_error_list)
+  cross_entropy_error_mean = np.mean(cross_entropy_error_list)
   return cross_entropy_error_mean
 
 def calc_derivative_a(processed_images, labels):
