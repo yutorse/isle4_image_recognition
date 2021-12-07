@@ -8,7 +8,7 @@ from tqdm import tqdm
 train_images, train_labels, test_images, test_labels = None, None, None, None
 
 input_node_size = 784
-inner_node_size = 100
+inner_node_size = 1000
 output_node_size = 10
 batch_size = 100
 epoch = 10
@@ -16,6 +16,11 @@ epoch = 10
 parameters = {}
 
 learning_rate = 0.001
+
+training_flag = True
+input_nonactive_ratio = 0.2
+inner_nonactive_ratio = 0.5
+dropout_mask = []
 
 def load_image():
   global train_images, train_labels, test_images, test_labels
@@ -82,23 +87,47 @@ def calc_derivative_ReLU(y, derivative_y):
     derivative_ReLU_list.append(list(derivative_y.T[i] * (np.where(y[i]>0, 1, 0))))
   return derivative_ReLU_list
 
+def calc_derivative_dropout(x, y):
+  derivative_dropout_list = []
+  for i in range(batch_size):
+    derivative_dropout_list.append(list(x[i] * y[i]))
+  return derivative_dropout_list
+
 def get_batch(): # バッチの抽出
   indexs = np.random.choice(len(train_images), size=batch_size, replace=False)
   batchs, labels = train_images[indexs], train_labels[indexs]
   return batchs, labels
 
+def dropout_layer(x, nonactive_ratio):
+  if training_flag:
+    mask = np.random.rand(*x.shape) > nonactive_ratio
+    return x * mask, mask
+  else:
+    return (1-nonactive_ratio) * x
+
 def input_layer(image): #入力層
   image = np.array(image)
   trans_image = np.reshape(image, (input_node_size, 1))
-  return trans_image
+  if training_flag:
+    dropout_image, _ = dropout_layer(trans_image, input_nonactive_ratio)
+  else:
+    dropout_image = dropout_layer(trans_image, input_nonactive_ratio)
+  return dropout_image
 
 def inner_layer(x): #中間層
-  return ReLU_function(np.dot(parameters["W_1"], x) + parameters["b_1"])
+  if training_flag:
+    image, mask = dropout_layer(ReLU_function(np.dot(parameters["W_1"], x) + parameters["b_1"]), inner_nonactive_ratio)
+    dropout_mask.append(mask)
+  else:
+    image = dropout_layer(ReLU_function(np.dot(parameters["W_1"], x) + parameters["b_1"]), inner_nonactive_ratio)
+  return image
 
 def output_layer(y): #出力層
   return softmax_function(np.dot(parameters["W_2"], y) + parameters["b_2"])
 
 def main():
+  global dropout_mask, training_flag
+  
   # 画像データの準備
   load_image()
 
@@ -114,13 +143,18 @@ def main():
     with tqdm(total=(len(train_images)//batch_size), leave=False) as pbar:
       for j in range(len(train_images)//batch_size):
         pbar.set_description('Epoch {}'.format(i))
+        dropout_mask = []
         batchs, labels = get_batch()
+        
         x = np.array(list(map(input_layer, batchs)))
         y = np.array(list(map(inner_layer, x)))
         processed_batchs = np.array(list(map(output_layer, y)))
         x = x.reshape(batch_size, input_node_size)
         y = y.reshape(batch_size, inner_node_size)
-
+        
+        dropout_mask = np.array(dropout_mask).reshape(batch_size, inner_node_size)
+        y = np.array(calc_derivative_dropout(y, dropout_mask))
+        
         derivative_a = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)
         derivative_W_2 = np.dot(derivative_a.T, y)
@@ -143,6 +177,7 @@ def main():
     tqdm.write(f"The loss in epoch{i} is {cross_entropy_error_mean}.")
 
   correct_num = 0
+  training_flag = False
   for i in range(10000):
     image = test_images[i]
     processed_image = output_layer(inner_layer(input_layer(image)))
@@ -152,7 +187,6 @@ def main():
   print(correct_num/10000)
   plot_figure(training_loss_list)
   
-
   #np.savez('parameters.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
 
 if __name__ ==  '__main__':
