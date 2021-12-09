@@ -86,16 +86,25 @@ def get_batch(): # バッチの抽出
   batchs, labels = train_images[indexs], train_labels[indexs]
   return batchs, labels
 
-def input_layer(image): #入力層
+def input_layer_single(image): #入力層
   image = np.array(image)
   trans_image = np.reshape(image, (input_node_size, 1))
   return trans_image
 
-def inner_layer(x): #中間層
+def inner_layer_single(x): #中間層
   return sigmoid_function(np.dot(parameters["W_1"], x) + parameters["b_1"])
 
-def output_layer(y): #出力層
+def output_layer_single(y): #出力層
   return softmax_function(np.dot(parameters["W_2"], y) + parameters["b_2"])
+
+def input_layer(images):
+  return np.array(list(map(input_layer_single, images)))
+
+def inner_layer(x):
+  return np.array(list(map(inner_layer_single, x)))
+
+def output_layer(y):
+  return np.array(list(map(output_layer_single, y)))
 
 def main():
   # 画像データの準備
@@ -114,9 +123,9 @@ def main():
       for j in range(len(train_images)//batch_size):
         pbar.set_description('Epoch {}'.format(i))
         batchs, labels = get_batch()
-        x = np.array(list(map(input_layer, batchs)))
-        y = np.array(list(map(inner_layer, x)))
-        processed_batchs = np.array(list(map(output_layer, y)))
+        x = input_layer(batchs)
+        y = inner_layer(x)
+        processed_batchs = output_layer(y)
         x = x.reshape(batch_size, input_node_size)
         y = y.reshape(batch_size, inner_node_size)
 

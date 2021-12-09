@@ -46,29 +46,38 @@ def get_batch():
   return batchs, labels
 
 #入力層
-def input_layer(image):
+def input_layer_single(image):
   image = np.array(image)
   trans_image = np.reshape(image, (input_node_size, 1))
   return trans_image
 
 #中間層
-def inner_layer(x):
+def inner_layer_single(x):
   np.random.seed(10)
   W_1 = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, input_node_size))
   b_1 = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, 1))
   return sigmoid_function(np.dot(W_1, x) + b_1)
 
 #出力層
-def output_layer(y):
+def output_layer_single(y):
   np.random.seed(20)
   W_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, inner_node_size))
   b_2 = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
   return softmax_function(np.dot(W_2, y) + b_2)
 
+def input_layer(images):
+  return np.array(list(map(input_layer_single, images)))
+
+def inner_layer(x):
+  return np.array(list(map(inner_layer_single, x)))
+
+def output_layer(y):
+  return np.array(list(map(output_layer_single, y)))
+
 def main():
   load_image()
   batchs, labels = get_batch()
-  processed_batchs = np.array(list(map(output_layer, map(inner_layer, map(input_layer, batchs)))))
+  processed_batchs = output_layer(inner_layer(input_layer(batchs)))
   cross_entropy_error = loss_function(processed_batchs, labels)
   print(f"The mean of losses is {cross_entropy_error}.")
 
