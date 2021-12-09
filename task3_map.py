@@ -86,18 +86,25 @@ def get_batch(): # バッチの抽出
   batchs, labels = train_images[indexs], train_labels[indexs]
   return batchs, labels
 
+def input_layer_single(image): #入力層
+  image = np.array(image)
+  trans_image = np.reshape(image, (input_node_size, 1))
+  return trans_image
+
+def inner_layer_single(x): #中間層
+  return sigmoid_function(np.dot(parameters["W_1"], x) + parameters["b_1"])
+
+def output_layer_single(y): #出力層
+  return softmax_function(np.dot(parameters["W_2"], y) + parameters["b_2"])
+
 def input_layer(images):
-  images = np.array(images)
-  trans_images = np.reshape(images, (batch_size, input_node_size))
-  return trans_images
+  return np.array(list(map(input_layer_single, images)))
 
-def inner_layer(images):
-  affine = (np.dot(parameters["W_1"], images.T) + parameters["b_1"]).T
-  return sigmoid_function(affine)
+def inner_layer(x):
+  return np.array(list(map(inner_layer_single, x)))
 
-def output_layer(images):
-  affine = (np.dot(parameters["W_2"], images.T) + parameters["b_2"]).T
-  return (np.array(list(map(softmax_function, affine)))).reshape(batch_size, output_node_size, 1)
+def output_layer(y):
+  return np.array(list(map(output_layer_single, y)))
 
 def main():
   # 画像データの準備
