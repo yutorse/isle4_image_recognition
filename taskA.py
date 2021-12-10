@@ -15,8 +15,9 @@ epoch = 10
 
 parameters = {}
 
-learning_rate = 0.001
+learning_rate = 0.1
 
+# ReLU
 ReLU_mask = []
 
 # dropout
@@ -184,9 +185,9 @@ def input_layer(images):
 def inner_layer(images):
   global dropout_mask
   affine_images = (np.dot(parameters["W_1"], images.T) + parameters["b_1"]).T
-  #BN_images = batch_normalization(affine_images)
-  #activate_images = ReLU_function(BN_images)
-  activate_images = ReLU_function(affine_images)
+  BN_images = batch_normalization(affine_images)
+  activate_images = ReLU_function(BN_images)
+  #activate_images = ReLU_function(affine_images)
   if training_flag:
     dropout_images, dropout_mask = dropout_layer(activate_images, inner_nonactive_ratio)
   else:
@@ -232,20 +233,20 @@ def main():
         derivative_b_2 = ((np.sum(derivative_softmax.T, axis=1)).reshape(output_node_size, 1))
         derivative_dropout = calc_derivative_dropout(derivative_X_2)
         derivative_ReLU = calc_derivative_ReLU(derivative_dropout)
-        #derivative_BN, derivative_beta, derivative_gamma = calc_derivative_BN(derivative_ReLU)
-        #derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
-        #derivative_W_1 = np.dot(derivative_BN.T, x)
-        #derivative_b_1 = ((np.sum(derivative_BN.T, axis=1)).reshape(inner_node_size, 1))
-        derivative_X_1 = np.dot(parameters["W_1"].T, derivative_ReLU.T)
-        derivative_W_1 = np.dot(derivative_ReLU.T, x)
-        derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
+        derivative_BN, derivative_beta, derivative_gamma = calc_derivative_BN(derivative_ReLU)
+        derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
+        derivative_W_1 = np.dot(derivative_BN.T, x)
+        derivative_b_1 = ((np.sum(derivative_BN.T, axis=1)).reshape(inner_node_size, 1))
+        #derivative_X_1 = np.dot(parameters["W_1"].T, derivative_ReLU.T)
+        #derivative_W_1 = np.dot(derivative_ReLU.T, x)
+        #derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
 
-        parameters["W_1"] -= (learning_rate*derivative_W_1)
-        parameters["W_2"] -= (learning_rate*derivative_W_2)
-        parameters["b_1"] -= (learning_rate*derivative_b_1)
-        parameters["b_2"] -= (learning_rate*derivative_b_2)
-        #beta -= (learning_rate*derivative_beta)
-        #gamma -= (learning_rate*derivative_gamma)
+        parameters["W_1"] -= (learning_rate*derivative_W_1)/i
+        parameters["W_2"] -= (learning_rate*derivative_W_2)/i
+        parameters["b_1"] -= (learning_rate*derivative_b_1)/i
+        parameters["b_2"] -= (learning_rate*derivative_b_2)/i
+        beta -= (learning_rate*derivative_beta)
+        gamma -= (learning_rate*derivative_gamma)
 
         cross_entropy_error = loss_function(processed_batchs, labels)
         training_loss_list.append(cross_entropy_error)
@@ -267,7 +268,7 @@ def main():
   print(correct_num/10000)
   plot_figure(training_loss_list)
   
-  np.savez('parameters.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
+  np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma)
 
 if __name__ ==  '__main__':
   main()
