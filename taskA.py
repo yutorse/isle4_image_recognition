@@ -17,6 +17,8 @@ parameters = {}
 
 learning_rate = 0.001
 
+ReLU_mask = []
+
 # dropout
 training_flag = True
 input_nonactive_ratio = 0.2
@@ -61,11 +63,13 @@ def init_parameters():
   parameters["b_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
 
 def ReLU_function(t): # ReLU関数
+  global ReLU_mask
+  ReLU_mask = np.where(t>0, 1, 0)
   return np.maximum(t, 0)
 
 def softmax_function(a): # ソフトマックス関数
-  max_a = a.max()
-  sum = np.sum(np.exp(a - max_a))
+  max_a = (a.max(axis=1)).reshape(len(a), 1)
+  sum = (np.sum(np.exp(a - max_a), axis=1)).reshape(len(a), 1)
   return np.exp(a - max_a) / sum
 
 def loss_function(processed_images, labels): # 損失関数
@@ -76,7 +80,7 @@ def loss_function(processed_images, labels): # 損失関数
     label_vector = np.zeros(output_node_size)
     label_vector[label] = 1
     cross_entropy_error = -(np.dot(label_vector, np.log(np.maximum(processed_image, delta))))
-    cross_entropy_error_list.append(list(cross_entropy_error))
+    cross_entropy_error_list.append(cross_entropy_error)
   cross_entropy_error_mean = np.mean(cross_entropy_error_list)
   return cross_entropy_error_mean
 
@@ -89,21 +93,19 @@ def calc_derivative_softmax(processed_images, labels):
     derivative_softmax_list.append(list((processed_image - label_vector)/batch_size))
   return derivative_softmax_list
 
+'''
 def calc_derivative_ReLU(y, derivative_y):
   derivative_ReLU_list = []
   for i in range(batch_size):
     derivative_y_i = (derivative_y.T[i]).reshape(inner_node_size, 1)
     derivative_ReLU_list.append(list(derivative_y.T[i] * (np.where(y[i]>0, 1, 0))))
   return derivative_ReLU_list
+'''
+def calc_derivative_ReLU(derivative_y):
+  return derivative_y * ReLU_mask
 
-'''
-def calc_derivative_dropout(x, y):
-  derivative_dropout_list = []
-  for i in range(batch_size):
-    derivative_dropout_list.append(list(x[i] * y[i]))
-  return derivative_dropout_list
-  return dropout_mask
-'''
+def calc_derivative_dropout(derivative_y):
+  return derivative_y * dropout_mask
 
 def calc_derivative_BN(derivative_y):
   delta = 1e-7
@@ -194,22 +196,10 @@ def inner_layer(images):
 def output_layer(images):
   affine_images = (np.dot(parameters["W_2"], images.T) + parameters["b_2"]).T
   if training_flag:
-    softmax_images = (np.array(list(map(softmax_function, affine_images)))).reshape(batch_size, output_node_size, 1)
+    softmax_images = softmax_function(affine_images)
   else:
-    softmax_images = np.array(list(map(softmax_function, affine_images)))
+    softmax_images = softmax_function(affine_images)
   return softmax_images
-#(np.array(list(map(softmax_function, affine_images)))).reshape(batch_size, output_node_size, 1)
-
-'''
-def input_layer(images):
-  return np.array(list(map(input_layer_single, images)))
-
-def inner_layer(x):
-  return np.array(list(map(inner_layer_single, x)))
-
-def output_layer(y):
-  return np.array(list(map(output_layer_single, y)))
-'''
 
 def main():
   global dropout_mask, training_flag, beta, gamma
@@ -237,11 +227,11 @@ def main():
         processed_batchs = output_layer(y)
         
         derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
-        derivative_X_2 = np.dot(parameters["W_2"].T, derivative_softmax.T)
+        derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
         derivative_W_2 = np.dot(derivative_softmax.T, y)
         derivative_b_2 = ((np.sum(derivative_softmax.T, axis=1)).reshape(output_node_size, 1))
-        derivative_dropout = dropout_mask
-        derivative_ReLU = np.array(calc_derivative_ReLU(derivative_dropout, derivative_X_2))
+        derivative_dropout = calc_derivative_dropout(derivative_X_2)
+        derivative_ReLU = calc_derivative_ReLU(derivative_dropout)
         #derivative_BN, derivative_beta, derivative_gamma = calc_derivative_BN(derivative_ReLU)
         #derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
         #derivative_W_1 = np.dot(derivative_BN.T, x)
@@ -250,11 +240,10 @@ def main():
         derivative_W_1 = np.dot(derivative_ReLU.T, x)
         derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
 
-
-        parameters["W_1"] -= (learning_rate*derivative_W_1)/i
-        parameters["W_2"] -= (learning_rate*derivative_W_2)/i
-        parameters["b_1"] -= (learning_rate*derivative_b_1)/i
-        parameters["b_2"] -= (learning_rate*derivative_b_2)/i
+        parameters["W_1"] -= (learning_rate*derivative_W_1)
+        parameters["W_2"] -= (learning_rate*derivative_W_2)
+        parameters["b_1"] -= (learning_rate*derivative_b_1)
+        parameters["b_2"] -= (learning_rate*derivative_b_2)
         #beta -= (learning_rate*derivative_beta)
         #gamma -= (learning_rate*derivative_gamma)
 

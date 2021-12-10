@@ -50,8 +50,8 @@ def sigmoid_function(t): # シグモイド関数
   return 1/(1 + np.exp(-t))
 
 def softmax_function(a): # ソフトマックス関数
-  max_a = a.max()
-  sum = np.sum(np.exp(a - max_a))
+  max_a = (a.max(axis=1)).reshape(len(a), 1)
+  sum = (np.sum(np.exp(a - max_a), axis=1)).reshape(len(a), 1)
   return np.exp(a - max_a) / sum
 
 def loss_function(processed_images, labels): # 損失関数
@@ -61,7 +61,7 @@ def loss_function(processed_images, labels): # 損失関数
     label_vector = np.zeros(output_node_size)
     label_vector[label] = 1
     cross_entropy_error = -(np.dot(label_vector, np.log(processed_image)))
-    cross_entropy_error_list.append(list(cross_entropy_error))
+    cross_entropy_error_list.append(cross_entropy_error)
   cross_entropy_error_mean = np.mean(cross_entropy_error_list)
   return cross_entropy_error_mean
 
@@ -97,7 +97,7 @@ def inner_layer(images):
 
 def output_layer(images):
   affine = (np.dot(parameters["W_2"], images.T) + parameters["b_2"]).T
-  return (np.array(list(map(softmax_function, affine)))).reshape(batch_size, output_node_size, 1)
+  return softmax_function(affine)
 
 def main():
   # 画像データの準備
