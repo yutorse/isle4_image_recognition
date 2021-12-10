@@ -119,8 +119,6 @@ def main():
         x = input_layer(batchs)
         y = inner_layer(x)
         processed_batchs = output_layer(y)
-        x = x.reshape(batch_size, input_node_size)
-        y = y.reshape(batch_size, inner_node_size)
 
         derivative_a = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)

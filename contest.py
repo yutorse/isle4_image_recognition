@@ -7,6 +7,12 @@ output_node_size = 10
 
 parameters = {}
 
+input_nonactive_ratio = 0.2
+inner_nonactive_ratio = 0.5
+
+def ReLU_function(t): # ReLU関数
+  return np.maximum(t, 0)
+
 def sigmoid_function(t):
   return 1/(1 + np.exp(-t))
 
@@ -15,16 +21,25 @@ def softmax_function(a):
   sum = np.sum(np.exp(a - max_a))
   return np.exp(a - max_a) / sum
 
+def dropout_layer(x, nonactive_ratio):
+  return (1-nonactive_ratio) * x
+
 def input_layer(image): #入力層
   image = np.array(image)
-  trans_image = np.reshape(image, (input_node_size, 1))
-  return trans_image
+  trans_image = np.reshape(image, (1, input_node_size))
+  dropout_image = dropout_layer(trans_image, input_nonactive_ratio)
+  return dropout_image
 
-def inner_layer(x): #中間層
-  return sigmoid_function(np.dot(parameters["W_1"], x) + parameters["b_1"])
+def inner_layer(image): #中間層
+  affine_image = (np.dot(parameters["W_1"], image.T) + parameters["b_1"]).T
+  activate_image = ReLU_function(affine_image)
+  dropout_image = dropout_layer(activate_image, inner_nonactive_ratio)
+  return dropout_image
 
-def output_layer(y): #出力層
-  return softmax_function(np.dot(parameters["W_2"], y) + parameters["b_2"])
+def output_layer(image): #出力層
+  affine_image = (np.dot(parameters["W_2"], image.T) + parameters["b_2"]).T
+  softmax_image = np.array(list(map(softmax_function, affine_image)))
+  return softmax_image
 
 def main():
   # 画像データの準備
