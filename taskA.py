@@ -29,7 +29,7 @@ dropout_mask = []
 # BN parameter
 beta = np.zeros(inner_node_size)
 gamma = np.ones(inner_node_size)
-mu_list = np.array([])
+ave_list = np.array([])
 var_list = np.array([])
 BN_x = np.array([])
 BN_x_hat = np.array([])
@@ -110,12 +110,12 @@ def calc_derivative_dropout(derivative_y):
 
 def calc_derivative_BN(derivative_y):
   delta = 1e-7
-  mu = mu_list[-1]
+  ave = ave_list[-1]
   var = var_list[-1]
   derivative_x_hat = derivative_y * gamma
-  derivative_var = np.sum((derivative_x_hat * (BN_x - mu) * (-1/2) * ((var + delta)**(-3/2))), axis=0)
-  derivative_mu = (np.sum((derivative_x_hat * (-1) * ((var + delta)**(-1/2))), axis=0)) + (derivative_var * (1/batch_size) * (np.sum(((-2) * (BN_x - mu)), axis=0)))
-  derivative_x = (derivative_x_hat * ((var + delta)**(-1/2))) + (derivative_var * (2/batch_size) * (BN_x - mu)) + ((1/batch_size) * derivative_mu)
+  derivative_var = np.sum((derivative_x_hat * (BN_x - ave) * (-1/2) * ((var + delta)**(-3/2))), axis=0)
+  derivative_ave = (np.sum((derivative_x_hat * (-1) * ((var + delta)**(-1/2))), axis=0)) + (derivative_var * (1/batch_size) * (np.sum(((-2) * (BN_x - ave)), axis=0)))
+  derivative_x = (derivative_x_hat * ((var + delta)**(-1/2))) + (derivative_var * (2/batch_size) * (BN_x - ave)) + ((1/batch_size) * derivative_ave)
   derivative_gamma = np.sum((derivative_y * BN_x_hat), axis=0)
   derivative_beta = np.sum(derivative_y, axis=0)
   return derivative_x, derivative_beta, derivative_gamma
@@ -133,22 +133,22 @@ def dropout_layer(x, nonactive_ratio):
     return (1-nonactive_ratio) * x
 
 def batch_normalization(x):
-  global BN_x, BN_x_hat, mu_list, var_list
+  global BN_x, BN_x_hat, ave_list, var_list
   delta = 1e-7
   if training_flag:
     BN_x = x
-    mu = BN_x.mean(axis = 0)
-    mu_list = np.append(mu_list, mu)
-    #print(mu_list)
+    ave = BN_x.mean(axis = 0)
+    ave_list = np.append(ave_list, ave)
+    #print(ave_list)
     var = BN_x.var(axis = 0)
     var_list = np.append(var_list, var)
-    BN_x_hat = (BN_x - mu)/(np.sqrt(var + delta))
+    BN_x_hat = (BN_x - ave)/(np.sqrt(var + delta))
     y = gamma * BN_x_hat + beta
     return y
   else:
-    mu = np.mean(mu_list)
+    ave = np.mean(ave_list)
     var = np.mean(var_list)
-    return gamma * x * ((var+delta)**(-1/2)) + beta - (gamma * mu * ((var+delta)**(-1/2)))
+    return gamma * x * ((var+delta)**(-1/2)) + beta - (gamma * ave * ((var+delta)**(-1/2)))
 
 '''
 def input_layer_single(image): #入力層
@@ -268,7 +268,7 @@ def main():
   print(correct_num/10000)
   plot_figure(training_loss_list)
   
-  np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma)
+  #np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
 
 if __name__ ==  '__main__':
   main()

@@ -6,15 +6,15 @@ inner_node_size = 100
 output_node_size = 10
 
 parameters = {}
+beta, gamma = [], []
+ave = 0
+var = 0
 
 input_nonactive_ratio = 0.2
 inner_nonactive_ratio = 0.5
 
 def ReLU_function(t): # ReLU関数
   return np.maximum(t, 0)
-
-def sigmoid_function(t):
-  return 1/(1 + np.exp(-t))
 
 def softmax_function(a):
   max_a = a.max()
@@ -24,6 +24,10 @@ def softmax_function(a):
 def dropout_layer(x, nonactive_ratio):
   return (1-nonactive_ratio) * x
 
+def batch_normalization(x):
+  delta = 1e-7
+  return gamma * x * ((var+delta)**(-1/2)) + beta - (gamma * ave * ((var+delta)**(-1/2)))
+
 def input_layer(image): #入力層
   image = np.array(image)
   trans_image = np.reshape(image, (1, input_node_size))
@@ -32,7 +36,9 @@ def input_layer(image): #入力層
 
 def inner_layer(image): #中間層
   affine_image = (np.dot(parameters["W_1"], image.T) + parameters["b_1"]).T
-  activate_image = ReLU_function(affine_image)
+  BN_image = batch_normalization(affine_image)
+  #activate_image = ReLU_function(affine_image)
+  activate_image = ReLU_function(BN_image)
   dropout_image = dropout_layer(activate_image, inner_nonactive_ratio)
   return dropout_image
 
@@ -42,16 +48,22 @@ def output_layer(image): #出力層
   return softmax_image
 
 def main():
-  # 画像データの準備
+  global beta, gamma, ave, var
+  
   images = np.loadtxt("le4MNIST_X.txt")
   
   file = open('predict.txt', 'a')
 
-  load_parameters = np.load("parameters.npz")
+  load_parameters = np.load("parameters_A3.npz")
   parameters["W_1"] = load_parameters["W_1"]
   parameters["W_2"] = load_parameters["W_2"]
   parameters["b_1"] = load_parameters["b_1"]
   parameters["b_2"] = load_parameters["b_2"]
+  beta = load_parameters["beta"]
+  gamma = load_parameters["gamma"]
+  ave = load_parameters["ave"]
+  var = load_parameters["var"]
+  print(gamma.shape)
 
   for i in range(len(images)):
     image = images[i]

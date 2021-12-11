@@ -1,5 +1,6 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
+from pylab import cm
 gamma = 1
 beta = 0
 
@@ -24,10 +25,8 @@ def softmax_function(a): # ソフトマックス関数
   sum = (np.sum(np.exp(a - max_a), axis=1)).reshape(len(a),1)
   return np.exp(a - max_a) / sum
 
-array = np.array([[1,2,3],[5,5,5]])
-print(array.max(axis=1))
-print(np.sum(array, axis=1))
-print(softmax_function(array))
-#print(np.array([[1, 2, 3], [4, 5, 6]]) * np.array([[True, False, True], [True, True, True]]))
-#t = np.array([[-1, 2, -3], [4, 5, 6]])
-#print(np.mean(t, axis=0))
+images = np.loadtxt("le4MNIST_X.txt")
+for i in range(1000):
+  fig = plt.figure()
+  plt.imshow((np.array(images[i])).reshape(28,28), cmap=cm.gray)
+  fig.savefig(f"pic{i}")
