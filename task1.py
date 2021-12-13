@@ -2,7 +2,7 @@ import numpy as np
 import mnist
 
 input_node_size = 784
-inner_node_size = 5
+inner_node_size = 1000
 output_node_size = 10
 
 def sigmoid_function(t): #シグモイド関数

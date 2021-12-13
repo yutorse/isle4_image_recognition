@@ -5,7 +5,7 @@ import random
 train_images, train_labels, test_images, test_labels = None, None, None, None
 
 input_node_size = 784
-inner_node_size = 5
+inner_node_size = 1000
 output_node_size = 10
 batch_size = 100
 
@@ -35,7 +35,7 @@ def loss_function(processed_images, labels): #cross_entropy_error
     label_vector = np.zeros(output_node_size)
     label_vector[label] = 1
     cross_entropy_error = -(np.dot(label_vector, np.log(processed_image)))
-    cross_entropy_error_list.append(list(cross_entropy_error))
+    cross_entropy_error_list.append(cross_entropy_error)
   cross_entropy_error_mean = np.mean(cross_entropy_error_list)
   return cross_entropy_error_mean
 

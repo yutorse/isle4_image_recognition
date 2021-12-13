@@ -17,20 +17,6 @@ parameters = {}
 
 learning_rate = 0.1
 
-def load_image():
-  global train_images, train_labels, test_images, test_labels
-  test_images = mnist.download_and_parse_mnist_file("t10k-images-idx3-ubyte.gz")
-  test_labels = mnist.download_and_parse_mnist_file("t10k-labels-idx1-ubyte.gz") #確認済み
-  train_images = mnist.download_and_parse_mnist_file("train-images-idx3-ubyte.gz")
-  train_labels = mnist.download_and_parse_mnist_file("train-labels-idx1-ubyte.gz")
-
-def load_parameters(file_name):
-  load_param = np.load(file_name)
-  parameters["W_1"] = load_param["W_1"]
-  parameters["W_2"] = load_param["W_2"]
-  parameters["b_1"] = load_param["b_1"]
-  parameters["b_2"] = load_param["b_2"]
-
 def plot_figure(list):
   plt.figure(figsize=(8, 6))
   plt.plot(np.arange(1, len(list) + 1), list)
@@ -45,6 +31,20 @@ def init_parameters():
   parameters["b_1"] = np.random.normal(loc=0, scale=np.sqrt(1/input_node_size), size=(inner_node_size, 1))
   parameters["W_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, inner_node_size))
   parameters["b_2"] = np.random.normal(loc=0, scale=np.sqrt(1/inner_node_size), size=(output_node_size, 1))
+
+def load_parameters(file_name):
+  load_param = np.load(file_name)
+  parameters["W_1"] = load_param["W_1"]
+  parameters["W_2"] = load_param["W_2"]
+  parameters["b_1"] = load_param["b_1"]
+  parameters["b_2"] = load_param["b_2"]
+
+def load_image():
+  global train_images, train_labels, test_images, test_labels
+  test_images = mnist.download_and_parse_mnist_file("t10k-images-idx3-ubyte.gz")
+  test_labels = mnist.download_and_parse_mnist_file("t10k-labels-idx1-ubyte.gz")
+  train_images = mnist.download_and_parse_mnist_file("train-images-idx3-ubyte.gz")
+  train_labels = mnist.download_and_parse_mnist_file("train-labels-idx1-ubyte.gz")
 
 def sigmoid_function(t): # シグモイド関数
   return 1/(1 + np.exp(-t))
@@ -105,6 +105,7 @@ def main():
 
   # W_1, W_2, b_1, b_2 を乱数で初期化
   init_parameters()
+  #load_parameters()
 
   # 各バッチに対する損失を保持しておく配列
   training_loss_list = []

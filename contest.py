@@ -33,6 +33,7 @@ def input_layer(image): #入力層
   trans_image = np.reshape(image, (1, input_node_size))
   dropout_image = dropout_layer(trans_image, input_nonactive_ratio)
   return dropout_image
+  #return trans_image
 
 def inner_layer(image): #中間層
   affine_image = (np.dot(parameters["W_1"], image.T) + parameters["b_1"]).T
@@ -41,6 +42,7 @@ def inner_layer(image): #中間層
   activate_image = ReLU_function(BN_image)
   dropout_image = dropout_layer(activate_image, inner_nonactive_ratio)
   return dropout_image
+  #return activate_image
 
 def output_layer(image): #出力層
   affine_image = (np.dot(parameters["W_2"], image.T) + parameters["b_2"]).T
@@ -52,9 +54,10 @@ def main():
   
   images = np.loadtxt("le4MNIST_X.txt")
   
-  file = open('predict.txt', 'a')
+  file = open('predict.txt', 'w')
 
   load_parameters = np.load("parameters_A3.npz")
+  #load_parameters = np.load("parameters_A1.npz")
   parameters["W_1"] = load_parameters["W_1"]
   parameters["W_2"] = load_parameters["W_2"]
   parameters["b_1"] = load_parameters["b_1"]
@@ -63,7 +66,6 @@ def main():
   gamma = load_parameters["gamma"]
   ave = load_parameters["ave"]
   var = load_parameters["var"]
-  print(gamma.shape)
 
   for i in range(len(images)):
     image = images[i]
