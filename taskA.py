@@ -94,14 +94,6 @@ def calc_derivative_softmax(processed_images, labels):
     derivative_softmax_list.append(list((processed_image - label_vector)/batch_size))
   return derivative_softmax_list
 
-'''
-def calc_derivative_ReLU(y, derivative_y):
-  derivative_ReLU_list = []
-  for i in range(batch_size):
-    derivative_y_i = (derivative_y.T[i]).reshape(inner_node_size, 1)
-    derivative_ReLU_list.append(list(derivative_y.T[i] * (np.where(y[i]>0, 1, 0))))
-  return derivative_ReLU_list
-'''
 def calc_derivative_ReLU(derivative_y):
   return derivative_y * ReLU_mask
 
@@ -139,7 +131,6 @@ def batch_normalization(x):
     BN_x = x
     ave = BN_x.mean(axis = 0)
     ave_list = np.append(ave_list, ave)
-    #print(ave_list)
     var = BN_x.var(axis = 0)
     var_list = np.append(var_list, var)
     BN_x_hat = (BN_x - ave)/(np.sqrt(var + delta))
@@ -150,36 +141,16 @@ def batch_normalization(x):
     var = np.mean(var_list)
     return gamma * x * ((var+delta)**(-1/2)) + beta - (gamma * ave * ((var+delta)**(-1/2)))
 
-'''
-def input_layer_single(image): #入力層
-  image = np.array(image)
-  trans_image = np.reshape(image, (input_node_size, 1))
-  if training_flag:
-    dropout_image, _ = dropout_layer(trans_image, input_nonactive_ratio)
-  else:
-    dropout_image = dropout_layer(trans_image, input_nonactive_ratio)
-  return dropout_image
-
-def inner_layer_single(x): #中間層
-  if training_flag:
-    image, mask = dropout_layer(batch_normalization(ReLU_function(np.dot(parameters["W_1"], x) + parameters["b_1"])), inner_nonactive_ratio)
-    dropout_mask.append(mask)
-  else:
-    image = dropout_layer(ReLU_function(np.dot(parameters["W_1"], x) + parameters["b_1"]), inner_nonactive_ratio)
-  return image
-
-def output_layer_single(y): #出力層
-  return softmax_function(np.dot(parameters["W_2"], y) + parameters["b_2"])
-'''
-
 def input_layer(images):
-  images = np.array(images)
+  images = np.array(images, dtype=float)
+  images /= 255 # pixel normalization
   if training_flag:
     trans_images = np.reshape(images, (len(images), input_node_size))
     dropout_images, _ = dropout_layer(trans_images, input_nonactive_ratio)
   else:
     trans_images = np.reshape(images, (1, input_node_size))
     dropout_images = dropout_layer(trans_images, input_nonactive_ratio)
+  #return trans_images
   return dropout_images
 
 def inner_layer(images):
@@ -193,13 +164,11 @@ def inner_layer(images):
   else:
     dropout_images = dropout_layer(activate_images, inner_nonactive_ratio)
   return dropout_images
+  #return activate_images
 
 def output_layer(images):
   affine_images = (np.dot(parameters["W_2"], images.T) + parameters["b_2"]).T
-  if training_flag:
-    softmax_images = softmax_function(affine_images)
-  else:
-    softmax_images = softmax_function(affine_images)
+  softmax_images = softmax_function(affine_images)
   return softmax_images
 
 def main():
@@ -233,6 +202,7 @@ def main():
         derivative_b_2 = ((np.sum(derivative_softmax.T, axis=1)).reshape(output_node_size, 1))
         derivative_dropout = calc_derivative_dropout(derivative_X_2)
         derivative_ReLU = calc_derivative_ReLU(derivative_dropout)
+        #derivative_ReLU = calc_derivative_ReLU(derivative_X_2)
         derivative_BN, derivative_beta, derivative_gamma = calc_derivative_BN(derivative_ReLU)
         derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
         derivative_W_1 = np.dot(derivative_BN.T, x)
@@ -267,8 +237,8 @@ def main():
       correct_num += 1
   print(correct_num/10000)
   plot_figure(training_loss_list)
-  
-  #np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
+  #np.savez('parameters_A1.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
+  np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
 
 if __name__ ==  '__main__':
   main()
