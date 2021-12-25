@@ -22,7 +22,7 @@ def plot_figure(list):
   plt.plot(np.arange(1, len(list) + 1), list)
   plt.xlabel('iteration')
   plt.ylabel('loss')
-  plt.title('Cross Entropy Error', fontsize=20) # タイトル
+  plt.title('Cross Entropy Error', fontsize=20)
   plt.grid()
   plt.show()
 
@@ -103,9 +103,12 @@ def main():
   # 画像データの準備
   load_image()
 
-  # W_1, W_2, b_1, b_2 を乱数で初期化
-  init_parameters()
-  #load_parameters()
+  choice = input("use parameter file ? [yes/no]: ")
+  if choice == "yes":
+    file_name =  input("input the parameter file name: ")
+    load_parameters(file_name)
+  elif choice == "no":
+    init_parameters()
 
   # 各バッチに対する損失を保持しておく配列
   training_loss_list = []
@@ -124,16 +127,16 @@ def main():
         derivative_a = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = np.dot(parameters["W_2"].T, derivative_a.T)
         derivative_W_2 = np.dot(derivative_a.T, y)
-        derivative_b_2 = ((np.sum(derivative_a.T, axis=1)).reshape(output_node_size, 1))
+        derivative_b_2 = (np.sum(derivative_a.T, axis=1)).reshape(output_node_size, 1)
         derivative_t = np.array(calc_derivative_sigmoid(y, derivative_X_2))
         derivative_X_1 = np.dot(parameters["W_1"].T, derivative_t.T)
         derivative_W_1 = np.dot(derivative_t.T, x)
-        derivative_b_1 = ((np.sum(derivative_t.T, axis=1)).reshape(inner_node_size, 1))
+        derivative_b_1 = (np.sum(derivative_t.T, axis=1)).reshape(inner_node_size, 1)
 
-        parameters["W_1"] -= (learning_rate*derivative_W_1)/(i**2)
-        parameters["W_2"] -= (learning_rate*derivative_W_2)/(i**2)
-        parameters["b_1"] -= (learning_rate*derivative_b_1)/(i**2)
-        parameters["b_2"] -= (learning_rate*derivative_b_2)/(i**2)
+        parameters["W_1"] -= (learning_rate*derivative_W_1)
+        parameters["W_2"] -= (learning_rate*derivative_W_2)
+        parameters["b_1"] -= (learning_rate*derivative_b_1)
+        parameters["b_2"] -= (learning_rate*derivative_b_2)
 
         cross_entropy_error = loss_function(processed_batchs, labels)
         training_loss_list.append(cross_entropy_error)
@@ -142,9 +145,9 @@ def main():
     cross_entropy_error_mean = np.mean(training_loss_list[(i-1)*(len(train_images)//batch_size):len(training_loss_list)-1])
     tqdm.write(f"The loss in epoch{i} is {cross_entropy_error_mean}.")
 
+  if(input("save the parameter ? [yes/no]: ") == "yes"):
+    np.savez('parameters_task3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
+ 
   plot_figure(training_loss_list)
-
-  np.savez('parameters.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
-
 if __name__ ==  '__main__':
   main()

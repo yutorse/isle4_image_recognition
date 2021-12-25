@@ -1,5 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import mnist
+from pylab import cm
 
 input_node_size = 784
 inner_node_size = 1000
@@ -34,11 +36,14 @@ def main():
   test_images = mnist.download_and_parse_mnist_file("t10k-images-idx3-ubyte.gz")
   test_labels = mnist.download_and_parse_mnist_file("t10k-labels-idx1-ubyte.gz")
 
-  i = int(input())
+  i = int(input('Input the number: '))
   image = test_images[i]
   processed_image = output_layer(inner_layer(input_layer(image)))
   prediction = np.argmax(processed_image)
-  print(prediction)
+  print(f"prediction: {prediction}")
+  print(f"correct label: {test_labels[i]}")
+  plt.imshow(test_images[i], cmap=cm.gray)
+  plt.show()
 
 if __name__ ==  '__main__':
   main()

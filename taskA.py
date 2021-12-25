@@ -8,7 +8,7 @@ from tqdm import tqdm
 train_images, train_labels, test_images, test_labels = None, None, None, None
 
 input_node_size = 784
-inner_node_size = 1000
+inner_node_size = 100
 output_node_size = 10
 batch_size = 100
 epoch = 10
@@ -159,11 +159,13 @@ def inner_layer(images):
   BN_images = batch_normalization(affine_images)
   activate_images = ReLU_function(BN_images)
   #activate_images = ReLU_function(affine_images)
+  
   if training_flag:
     dropout_images, dropout_mask = dropout_layer(activate_images, inner_nonactive_ratio)
   else:
     dropout_images = dropout_layer(activate_images, inner_nonactive_ratio)
   return dropout_images
+  
   #return activate_images
 
 def output_layer(images):
@@ -211,10 +213,10 @@ def main():
         #derivative_W_1 = np.dot(derivative_ReLU.T, x)
         #derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
 
-        parameters["W_1"] -= (learning_rate*derivative_W_1)/i
-        parameters["W_2"] -= (learning_rate*derivative_W_2)/i
-        parameters["b_1"] -= (learning_rate*derivative_b_1)/i
-        parameters["b_2"] -= (learning_rate*derivative_b_2)/i
+        parameters["W_1"] -= (learning_rate*derivative_W_1)
+        parameters["W_2"] -= (learning_rate*derivative_W_2)
+        parameters["b_1"] -= (learning_rate*derivative_b_1)
+        parameters["b_2"] -= (learning_rate*derivative_b_2)
         beta -= (learning_rate*derivative_beta)
         gamma -= (learning_rate*derivative_gamma)
 
@@ -238,7 +240,7 @@ def main():
   print(correct_num/10000)
   plot_figure(training_loss_list)
   #np.savez('parameters_A1.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
-  np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
+  #np.savez('parameters_A3.npz', W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
 
 if __name__ ==  '__main__':
   main()

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pylab import cm
+import mnist
 gamma = 1
 beta = 0
 
@@ -26,7 +27,10 @@ def softmax_function(a): # ソフトマックス関数
   return np.exp(a - max_a) / sum
 
 images = np.loadtxt("le4MNIST_X.txt")
+print(mnist.__file__)
 for i in range(1000):
   fig = plt.figure()
   plt.imshow((np.array(images[i])).reshape(28,28), cmap=cm.gray)
   fig.savefig(f"pic{i}")
+  
+      
