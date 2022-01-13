@@ -115,7 +115,6 @@ def main():
 
   # 学習
   for i in tqdm(range(1, epoch+1)):
-    #print(f"epoch: {i+1}/{epoch}")
     with tqdm(total=(len(train_images)//batch_size), leave=False) as pbar:
       for j in range(len(train_images)//batch_size):
         pbar.set_description('Epoch {}'.format(i))

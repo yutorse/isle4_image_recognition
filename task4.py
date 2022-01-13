@@ -1,12 +1,11 @@
-import numpy as np
 import mnist
+import numpy as np
 
 input_node_size = 784
 inner_node_size = 100
 output_node_size = 10
 
 parameters = {}
-
 def load_parameters(file_name):
   load_param = np.load(file_name)
   parameters["W_1"] = load_param["W_1"]
