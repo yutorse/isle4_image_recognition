@@ -175,14 +175,12 @@ def batch_normalization(x):
 def input_layer(images):
   images = np.array(images, dtype=float)
   images /= 255 # pixel normalization
-  '''
   if training_flag:
     trans_images = np.reshape(images, (len(images), input_node_size))
   else:
     trans_images = np.reshape(images, (1, input_node_size))
   return trans_images
   '''
-  
   if training_flag:
     trans_images = np.reshape(images, (len(images), input_node_size))
     dropout_images, _ = dropout_layer(trans_images, input_nonactive_ratio)
@@ -190,24 +188,24 @@ def input_layer(images):
     trans_images = np.reshape(images, (1, input_node_size))
     dropout_images = dropout_layer(trans_images, input_nonactive_ratio)
   return dropout_images
-  
+  '''
 
 def inner_layer(images):
   global dropout_mask
   affine_images = (np.dot(parameters["W_1"], images.T) + parameters["b_1"]).T
-  #activate_images = ReLU_function(affine_images)
-  
+  activate_images = ReLU_function(affine_images)
+  '''
   BN_images = batch_normalization(affine_images)
   activate_images = ReLU_function(BN_images)
-  
-  
+  '''
+  '''
   if training_flag:
     dropout_images, dropout_mask = dropout_layer(activate_images, inner_nonactive_ratio)
   else:
     dropout_images = dropout_layer(activate_images, inner_nonactive_ratio)
   return dropout_images
-  
-  #return activate_images
+  '''
+  return activate_images
 
 def output_layer(images):
   affine_images = (np.dot(parameters["W_2"], images.T) + parameters["b_2"]).T
@@ -247,7 +245,6 @@ def main():
         processed_batchs = output_layer(y)
 
         # A1まで
-        '''
         derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
         derivative_W_2 = np.dot(derivative_softmax.T, y)
@@ -256,7 +253,6 @@ def main():
         derivative_X_1 = np.dot(parameters["W_1"].T, derivative_ReLU.T)
         derivative_W_1 = np.dot(derivative_ReLU.T, x)
         derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
-        '''
 
         # A2まで
         '''
@@ -272,6 +268,7 @@ def main():
         '''
 
         # A3まで
+        '''
         derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
         derivative_W_2 = np.dot(derivative_softmax.T, y)
@@ -282,7 +279,7 @@ def main():
         derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
         derivative_W_1 = np.dot(derivative_BN.T, x)
         derivative_b_1 = ((np.sum(derivative_BN.T, axis=1)).reshape(inner_node_size, 1))
-        
+        '''
         
         # SGD
         '''
@@ -356,32 +353,32 @@ def main():
         m_W2 = beta_1 * m_W2 + (1-beta_1) * derivative_W_2
         m_b1 = beta_1 * m_b1 + (1-beta_1) * derivative_b_1
         m_b2 = beta_1 * m_b2 + (1-beta_1) * derivative_b_2
-        m_beta = beta_1 * m_beta + (1-beta_1) * derivative_beta
-        m_gamma = beta_1 * m_gamma + (1-beta_1) * derivative_gamma
+        #m_beta = beta_1 * m_beta + (1-beta_1) * derivative_beta
+        #m_gamma = beta_1 * m_gamma + (1-beta_1) * derivative_gamma
         v_W1 = beta_2 * v_W1 + (1-beta_2) * derivative_W_1 * derivative_W_1
         v_W2 = beta_2 * v_W2 + (1-beta_2) * derivative_W_2 * derivative_W_2
         v_b1 = beta_2 * v_b1 + (1-beta_2) * derivative_b_1 * derivative_b_1
         v_b2 = beta_2 * v_b2 + (1-beta_2) * derivative_b_2 * derivative_b_2
-        v_beta = beta_2 * v_beta + (1-beta_2) * derivative_beta * derivative_beta
-        v_gamma = beta_2 * v_gamma + (1-beta_2) * derivative_gamma * derivative_gamma
+        #v_beta = beta_2 * v_beta + (1-beta_2) * derivative_beta * derivative_beta
+        #v_gamma = beta_2 * v_gamma + (1-beta_2) * derivative_gamma * derivative_gamma
         m_W1_hat = m_W1/(1-beta_1**t)
         m_W2_hat = m_W2/(1-beta_1**t)
         m_b1_hat = m_b1/(1-beta_1**t)
         m_b2_hat = m_b2/(1-beta_1**t)
-        m_beta_hat = m_beta/(1-beta_1**t)
-        m_gamma_hat = m_gamma/(1-beta_1**t)
+        #m_beta_hat = m_beta/(1-beta_1**t)
+        #m_gamma_hat = m_gamma/(1-beta_1**t)
         v_W1_hat = v_W1/(1-beta_2**t)
         v_W2_hat = v_W2/(1-beta_2**t)
         v_b1_hat = v_b1/(1-beta_2**t)
         v_b2_hat = v_b2/(1-beta_2**t)
-        v_beta_hat = v_beta/(1-beta_2**t)
-        v_gamma_hat = v_gamma/(1-beta_2**t)
+        #v_beta_hat = v_beta/(1-beta_2**t)
+        #v_gamma_hat = v_gamma/(1-beta_2**t)
         parameters["W_1"] -= alpha * m_W1_hat / (np.sqrt(v_W1_hat) + epsilon)
         parameters["W_2"] -= alpha * m_W2_hat / (np.sqrt(v_W2_hat) + epsilon)
         parameters["b_1"] -= alpha * m_b1_hat / (np.sqrt(v_b1_hat) + epsilon)
         parameters["b_2"] -= alpha * m_b2_hat / (np.sqrt(v_b2_hat) + epsilon)
-        beta -= alpha * m_beta_hat / (np.sqrt(v_beta_hat) + epsilon)
-        gamma -= alpha * m_gamma_hat / (np.sqrt(v_gamma_hat) + epsilon)
+        #beta -= alpha * m_beta_hat / (np.sqrt(v_beta_hat) + epsilon)
+        #gamma -= alpha * m_gamma_hat / (np.sqrt(v_gamma_hat) + epsilon)
 
         cross_entropy_error = loss_function(processed_batchs, labels)
         training_loss_list.append(cross_entropy_error)
@@ -405,8 +402,8 @@ def main():
 
   if(input("save the parameter ? [yes/no]: ") == "yes"):
     file_name = input('Input the file name: ')
-    #np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
-    np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
+    np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
+    #np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
 
 
 if __name__ ==  '__main__':
