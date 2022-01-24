@@ -15,38 +15,11 @@ epoch = 10
 
 parameters = {}
 
-learning_rate = 0.1
-
-'''
-# 慣性項付きSGD
-Momentum_SGD_lr = 0.01
-delta_W1 = delta_W2 = delta_b1 = delta_b2 = 0
-alpha = 0.9
-
-# AdaGrad
-AdaGrad_lr = 0.01
-h_W1 = h_W2 = h_b1 = h_b2 = 1e-8
-
-# RMSProp
-RMSProp_lr = 0.01
-epsilon = 1e-8
-rho = 0.9
-h_W1 = h_W2 = h_b1 = h_b2 = 0
-
 # AdaDelta
 rho = 0.95
 epsilon = 1e-6
 h_W1 = h_W2 = h_b1 = h_b2 = 0
 s_W1 = s_W2 = s_b1 = s_b2 = 0
-'''
-# Adam
-t = 0
-m_W1 = m_W2 = m_b1 = m_b2 = m_beta = m_gamma = 0
-v_W1 = v_W2 = v_b1 = v_b2 = v_beta = v_gamma = 0
-alpha = 0.001
-beta_1 = 0.9
-beta_2 = 0.999
-epsilon = 1e-8
 
 # ReLU
 ReLU_mask = []
@@ -181,31 +154,11 @@ def input_layer(images):
   else:
     trans_images = np.reshape(images, (1, input_node_size))
   return trans_images
-  '''
-  if training_flag:
-    trans_images = np.reshape(images, (len(images), input_node_size))
-    dropout_images, _ = dropout_layer(trans_images, input_nonactive_ratio)
-  else:
-    trans_images = np.reshape(images, (1, input_node_size))
-    dropout_images = dropout_layer(trans_images, input_nonactive_ratio)
-  return dropout_images
-  '''
 
 def inner_layer(images):
   global dropout_mask
   affine_images = (np.dot(parameters["W_1"], images.T) + parameters["b_1"]).T
-  #activate_images = ReLU_function(affine_images)
-  
-  BN_images = batch_normalization(affine_images)
-  activate_images = ReLU_function(BN_images)
-  
-  '''
-  if training_flag:
-    dropout_images, dropout_mask = dropout_layer(activate_images, inner_nonactive_ratio)
-  else:
-    dropout_images = dropout_layer(activate_images, inner_nonactive_ratio)
-  return dropout_images
-  '''
+  activate_images = ReLU_function(affine_images)
   return activate_images
 
 def output_layer(images):
@@ -215,10 +168,7 @@ def output_layer(images):
 
 def main():
   global dropout_mask, training_flag, beta, gamma
-  global delta_W1, delta_W2, delta_b1, delta_b2 #慣性項付きSGD
-  global h_W1, h_W2, h_b1, h_b2 #AdaGrad, RMSProp, AdaDelta
-  global s_W1, s_W2, s_b1, s_b2 #AdaDelta
-  global t, m_W1, m_W2, m_b1, m_b2, m_beta, m_gamma, v_W1, v_W2, v_b1, v_b2, v_beta, v_gamma #Adam
+  global h_W1, h_W2, h_b1, h_b2, s_W1, s_W2, s_b1, s_b2 #AdaDelta
 
   # 画像データの準備
   load_image()
@@ -247,8 +197,6 @@ def main():
         y = inner_layer(x)
         processed_batchs = output_layer(y)
 
-        # A1まで
-        '''
         derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
         derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
         derivative_W_2 = np.dot(derivative_softmax.T, y)
@@ -257,92 +205,8 @@ def main():
         derivative_X_1 = np.dot(parameters["W_1"].T, derivative_ReLU.T)
         derivative_W_1 = np.dot(derivative_ReLU.T, x)
         derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
-        '''
-        # A2まで
-        '''
-        derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
-        derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
-        derivative_W_2 = np.dot(derivative_softmax.T, y)
-        derivative_b_2 = ((np.sum(derivative_softmax.T, axis=1)).reshape(output_node_size, 1))
-        derivative_dropout = calc_derivative_dropout(derivative_X_2)
-        derivative_ReLU = calc_derivative_ReLU(derivative_dropout)
-        derivative_X_1 = np.dot(parameters["W_1"].T, derivative_ReLU.T)
-        derivative_W_1 = np.dot(derivative_ReLU.T, x)
-        derivative_b_1 = ((np.sum(derivative_ReLU.T, axis=1)).reshape(inner_node_size, 1))
-        '''
 
-        # A3まで
-        '''
-        derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
-        derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
-        derivative_W_2 = np.dot(derivative_softmax.T, y)
-        derivative_b_2 = ((np.sum(derivative_softmax.T, axis=1)).reshape(output_node_size, 1))
-        derivative_dropout = calc_derivative_dropout(derivative_X_2)
-        derivative_ReLU = calc_derivative_ReLU(derivative_dropout)
-        derivative_BN, derivative_beta, derivative_gamma = calc_derivative_BN(derivative_ReLU)
-        derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
-        derivative_W_1 = np.dot(derivative_BN.T, x)
-        derivative_b_1 = ((np.sum(derivative_BN.T, axis=1)).reshape(inner_node_size, 1))
-        '''
-        derivative_softmax = np.array(calc_derivative_softmax(processed_batchs, labels))
-        derivative_X_2 = (np.dot(parameters["W_2"].T, derivative_softmax.T)).T
-        derivative_W_2 = np.dot(derivative_softmax.T, y)
-        derivative_b_2 = ((np.sum(derivative_softmax.T, axis=1)).reshape(output_node_size, 1))
-        derivative_ReLU = calc_derivative_ReLU(derivative_X_2)
-        derivative_BN, derivative_beta, derivative_gamma = calc_derivative_BN(derivative_ReLU)
-        derivative_X_1 = np.dot(parameters["W_1"].T, derivative_BN.T)
-        derivative_W_1 = np.dot(derivative_BN.T, x)
-        derivative_b_1 = ((np.sum(derivative_BN.T, axis=1)).reshape(inner_node_size, 1))
-
-        
-        # SGD
-        '''
-        parameters["W_1"] -= (learning_rate*derivative_W_1)
-        parameters["W_2"] -= (learning_rate*derivative_W_2)
-        parameters["b_1"] -= (learning_rate*derivative_b_1)
-        parameters["b_2"] -= (learning_rate*derivative_b_2)
-        #beta -= (learning_rate*derivative_beta)
-        #gamma -= (learning_rate*derivative_gamma)
-        '''
-        
-        # 慣性項付きSGD
-        '''
-        delta_W1 = alpha * delta_W1 - Momentum_SGD_lr * derivative_W_1
-        delta_W2 = alpha * delta_W2 - Momentum_SGD_lr * derivative_W_2
-        delta_b1 = alpha * delta_b1 - Momentum_SGD_lr * derivative_b_1
-        delta_b2 = alpha * delta_b2 - Momentum_SGD_lr * derivative_b_2
-        parameters["W_1"] += delta_W1
-        parameters["W_2"] += delta_W2
-        parameters["b_1"] += delta_b1
-        parameters["b_2"] += delta_b2
-        '''
-        
-        # AdaGrad
-        '''
-        h_W1 += derivative_W_1 * derivative_W_1
-        h_W2 += derivative_W_2 * derivative_W_2
-        h_b1 += derivative_b_1 * derivative_b_1
-        h_b2 += derivative_b_2 * derivative_b_2
-        parameters["W_1"] -= AdaGrad_lr * derivative_W_1 / np.sqrt(h_W1)
-        parameters["W_2"] -= AdaGrad_lr * derivative_W_2 / np.sqrt(h_W2)
-        parameters["b_1"] -= AdaGrad_lr * derivative_b_1 / np.sqrt(h_b1)
-        parameters["b_2"] -= AdaGrad_lr * derivative_b_2 / np.sqrt(h_b2)
-        '''
-        
-        # RMSProp
-        '''
-        h_W1 = rho * h_W1 + (1-rho) * derivative_W_1 * derivative_W_1
-        h_W2 = rho * h_W2 + (1-rho) * derivative_W_2 * derivative_W_2
-        h_b1 = rho * h_b1 + (1-rho) * derivative_b_1 * derivative_b_1
-        h_b2 = rho * h_b2 + (1-rho) * derivative_b_2 * derivative_b_2
-        parameters["W_1"] -= RMSProp_lr * derivative_W_1 / (np.sqrt(h_W1) + epsilon)
-        parameters["W_2"] -= RMSProp_lr * derivative_W_2 / (np.sqrt(h_W2) + epsilon)
-        parameters["b_1"] -= RMSProp_lr * derivative_b_1 / (np.sqrt(h_b1) + epsilon)
-        parameters["b_2"] -= RMSProp_lr * derivative_b_2 / (np.sqrt(h_b2) + epsilon)
-        '''
-        
         # AdaDelta
-        '''
         h_W1 = rho * h_W1 + (1-rho) * derivative_W_1 * derivative_W_1
         h_W2 = rho * h_W2 + (1-rho) * derivative_W_2 * derivative_W_2
         h_b1 = rho * h_b1 + (1-rho) * derivative_b_1 * derivative_b_1
@@ -359,41 +223,7 @@ def main():
         parameters["W_2"] += delta_W2
         parameters["b_1"] += delta_b1
         parameters["b_2"] += delta_b2
-        '''
         
-        # Adam
-        t += 1
-        m_W1 = beta_1 * m_W1 + (1-beta_1) * derivative_W_1
-        m_W2 = beta_1 * m_W2 + (1-beta_1) * derivative_W_2
-        m_b1 = beta_1 * m_b1 + (1-beta_1) * derivative_b_1
-        m_b2 = beta_1 * m_b2 + (1-beta_1) * derivative_b_2
-        m_beta = beta_1 * m_beta + (1-beta_1) * derivative_beta
-        m_gamma = beta_1 * m_gamma + (1-beta_1) * derivative_gamma
-        v_W1 = beta_2 * v_W1 + (1-beta_2) * derivative_W_1 * derivative_W_1
-        v_W2 = beta_2 * v_W2 + (1-beta_2) * derivative_W_2 * derivative_W_2
-        v_b1 = beta_2 * v_b1 + (1-beta_2) * derivative_b_1 * derivative_b_1
-        v_b2 = beta_2 * v_b2 + (1-beta_2) * derivative_b_2 * derivative_b_2
-        v_beta = beta_2 * v_beta + (1-beta_2) * derivative_beta * derivative_beta
-        v_gamma = beta_2 * v_gamma + (1-beta_2) * derivative_gamma * derivative_gamma
-        m_W1_hat = m_W1/(1-beta_1**t)
-        m_W2_hat = m_W2/(1-beta_1**t)
-        m_b1_hat = m_b1/(1-beta_1**t)
-        m_b2_hat = m_b2/(1-beta_1**t)
-        m_beta_hat = m_beta/(1-beta_1**t)
-        m_gamma_hat = m_gamma/(1-beta_1**t)
-        v_W1_hat = v_W1/(1-beta_2**t)
-        v_W2_hat = v_W2/(1-beta_2**t)
-        v_b1_hat = v_b1/(1-beta_2**t)
-        v_b2_hat = v_b2/(1-beta_2**t)
-        v_beta_hat = v_beta/(1-beta_2**t)
-        v_gamma_hat = v_gamma/(1-beta_2**t)
-        parameters["W_1"] -= alpha * m_W1_hat / (np.sqrt(v_W1_hat) + epsilon)
-        parameters["W_2"] -= alpha * m_W2_hat / (np.sqrt(v_W2_hat) + epsilon)
-        parameters["b_1"] -= alpha * m_b1_hat / (np.sqrt(v_b1_hat) + epsilon)
-        parameters["b_2"] -= alpha * m_b2_hat / (np.sqrt(v_b2_hat) + epsilon)
-        beta -= alpha * m_beta_hat / (np.sqrt(v_beta_hat) + epsilon)
-        gamma -= alpha * m_gamma_hat / (np.sqrt(v_gamma_hat) + epsilon)
-
         cross_entropy_error = loss_function(processed_batchs, labels)
         training_loss_list.append(cross_entropy_error)
         pbar.update(1)
@@ -417,8 +247,8 @@ def main():
 
   if(input("save the parameter ? [yes/no]: ") == "yes"):
     file_name = input('Input the file name: ')
-    #np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
-    np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
+    np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"])
+    #np.savez(file_name, W_1=parameters["W_1"], W_2=parameters["W_2"], b_1=parameters["b_1"], b_2=parameters["b_2"], beta=beta, gamma=gamma, ave=np.mean(ave_list), var=np.mean(var_list))
 
 
 if __name__ ==  '__main__':

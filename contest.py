@@ -43,7 +43,9 @@ def input_layer(image): #入力層
 
 def inner_layer(image): #中間層
   affine_image = (np.dot(parameters["W_1"], image.T) + parameters["b_1"]).T
-  activate_image = ReLU_function(affine_image)
+  BN_image = batch_normalization(affine_image)
+  activate_image = ReLU_function(BN_image)
+  #activate_image = ReLU_function(affine_image)
   return activate_image
   '''
   activate_image = ReLU_function(affine_image)
@@ -77,12 +79,12 @@ def main():
   parameters["W_2"] = load_parameters["W_2"]
   parameters["b_1"] = load_parameters["b_1"]
   parameters["b_2"] = load_parameters["b_2"]
-  '''
+  
   beta = load_parameters["beta"]
   gamma = load_parameters["gamma"]
   ave = load_parameters["ave"]
   var = load_parameters["var"]
-  '''
+  
 
   for i in tqdm(range(len(images))):
     image = images[i]
